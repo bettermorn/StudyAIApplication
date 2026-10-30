@@ -161,6 +161,10 @@ flowchart LR
 - 融合传统机器学习 + 图计算 + 异常检测
 - 前中后台联动、处置过程留痕可溯
 
+<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
+<b>启示</b>：智能体不是取代前面学过的评分卡、图、异常检测，而是把它们<b>组织起来、闭环起来</b>。
+</div>
+
 </div>
 
 <div>
@@ -170,22 +174,18 @@ flowchart TD
   A[多源数据] --> B[图计算<br/>关联穿透]
   A --> C[异常检测<br/>交易信号]
   A --> D[机器学习<br/>风险评分]
-  B --> E[智能体<br/>汇总研判]
+  B --> E[智能体汇总研判]
   C --> E
   D --> E
-  E --> F[预警触发]
-  F --> G[线上处置<br/>留痕可溯]
-  G --> H[复盘优化]
-  H --> A
+  E --> F[预警触发<br/>线上处置留痕]
+  F --> H[复盘优化]
   style E fill:#fed7aa,stroke:#f97316
 ```
 
-</div>
+<div class="text-xs opacity-70">复盘结果回流，持续优化预警策略</div>
 
 </div>
 
-<div class="p-2 bg-blue-50 rounded text-sm">
-<b>启示</b>：智能体不是取代前面学过的评分卡/图/异常检测，而是把它们<b>组织起来、闭环起来</b>。
 </div>
 
 ---
@@ -225,11 +225,11 @@ flowchart TD
 
 ---
 
-# 案例三：开源多智能体 FinRobot
+# 案例三（1/2）：开源多智能体 FinRobot 的架构
 
 <div class="text-sm opacity-70">来源：GitHub · AI4Finance-Foundation/FinRobot（论文 arXiv:2405.14767）</div>
 
-<div class="grid grid-cols-2 gap-6 mt-2">
+<div class="grid grid-cols-2 gap-6 mt-4">
 
 <div>
 
@@ -240,46 +240,68 @@ flowchart TD
 3. 基础设施/运维层
 4. 基础模型层（可插拔）
 
-**智能体工作流：感知 → 大脑 → 行动**
-
-- 感知：行情、新闻、财报等多模态数据
-- 大脑：大模型 + 金融思维链生成结构化指令
-- 行动：调用工具、生成报告、发出预警
-
 </div>
 
 <div>
 
-**最新版本的多智能体流水线**
+**智能体工作流：感知 → 大脑 → 行动**
 
-```mermaid {scale: 0.5}
-flowchart TD
-  L[总控智能体] --> D[数据]
-  D --> AN[分析]
-  AN --> M[建模]
-  M --> S[综合]
-  S --> R[报告]
-  S --> B[多头]
-  S --> E[空头]
-  B --> J[裁判]
-  E --> J
-  J --> R
+- **感知**：行情、新闻、财报等多模态数据
+- **大脑**：大模型 + 金融思维链生成结构化指令
+- **行动**：调用工具、生成报告、发出预警
+
+</div>
+
+</div>
+
+```mermaid {scale: 0.8}
+flowchart LR
+  P[感知<br/>多源金融数据] --> B[大脑<br/>大模型 + 金融思维链]
+  B --> A[行动<br/>工具调用 / 报告 / 预警]
+  style B fill:#fed7aa,stroke:#f97316
+```
+
+<div class="mt-2 p-2 bg-yellow-50 rounded text-sm">
+关键设计：<b>财务数字由确定性代码计算</b>，大模型只负责叙述；每个输出都带来源，可追溯。
+</div>
+
+<!--
+【68:00】先讲平台定位：FinRobot 是 AI4Finance 基金会开源的金融智能体平台。四层架构说明“模型可替换，金融工具与流程才是核心”；工作流用感知、大脑、行动三步串起来。
+-->
+
+---
+
+# 案例三（2/2）：FinRobot 的多智能体与“多空辩论”
+
+<div class="text-sm opacity-70">来源：GitHub · AI4Finance-Foundation/FinRobot 最新版本说明</div>
+
+```mermaid {scale: 0.8}
+flowchart LR
+  L[总控智能体] --> D[数据] --> AN[分析] --> M[建模] --> S[综合]
+  S --> B[多头] --> J[裁判]
+  S --> E[空头] --> J
+  J --> R[报告]
   style L fill:#fed7aa,stroke:#f97316
   style J fill:#ddd6fe,stroke:#8b5cf6
 ```
 
-<div class="text-xs mt-1 opacity-80">
-“多空辩论”：让正反两方智能体互相挑错，降低单一观点的偏差。
+<div class="grid grid-cols-2 gap-4 mt-3 text-sm">
+
+<div class="p-2 bg-gray-50 rounded">
+<b>分工流水线</b><br/>
+总控智能体调度数据、分析、建模、综合、报告五类角色，每一步都留痕。
+</div>
+
+<div class="p-2 bg-gray-50 rounded">
+<b>多空辩论</b><br/>
+多头与空头智能体互相挑错，由裁判综合，降低单一观点的偏差。
 </div>
 
 </div>
 
-</div>
-
-<div class="p-2 bg-yellow-50 rounded text-sm">
-关键设计：<b>财务数字由确定性代码计算</b>，大模型只负责叙述；每个输出都带来源，可追溯。
-</div>
-
+<!--
+【70:00】重点讲“多空辩论”：让正反两方互相挑错，是降低幻觉和偏见的一种设计。风控场景可类比：一个智能体找“能放”的理由，另一个找“不能放”的理由。
+-->
 ---
 
 # 案例四：TradingAgents——像一家投研公司那样协作
