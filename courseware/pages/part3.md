@@ -38,7 +38,7 @@ layout: section
 
 <div>
 
-```mermaid {scale: 0.8}
+```mermaid {scale: 0.6}
 graph TD
   D1((设备A)) --- U1[账户1]
   D1 --- U2[账户2]
