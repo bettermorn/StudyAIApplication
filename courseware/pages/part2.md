@@ -244,7 +244,7 @@ $$
 
 # 演示：基线模型代码
 
-```python {all|1-4|6-12|14-19|all}
+```python {all|1-4|6-9|11-12|14-17}
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -253,19 +253,14 @@ from sklearn.metrics import roc_auc_score, roc_curve
 df = pd.read_excel("default_of_credit_card_clients.xls", header=1)
 y = df["default payment next month"]
 X = df.drop(columns=["ID", "default payment next month"])
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=42)
 
-X_tr, X_te, y_tr, y_te = train_test_split(
-    X, y, test_size=0.3, stratify=y, random_state=42
-)
-
-lr = LogisticRegression(max_iter=1000)
-lr.fit(X_tr, y_tr)
+lr = LogisticRegression(max_iter=1000).fit(X_tr, y_tr)
 p = lr.predict_proba(X_te)[:, 1]
 
 def ks(y_true, score):
     fpr, tpr, _ = roc_curve(y_true, score)
     return (tpr - fpr).max()
-
 print("AUC:", roc_auc_score(y_te, p), " KS:", ks(y_te, p))
 ```
 
@@ -273,21 +268,20 @@ print("AUC:", roc_auc_score(y_te, p), " KS:", ks(y_te, p))
 基线结果通常 AUC 约 0.70~0.72（具体以现场运行为准）。
 </div>
 
+<style>
+.slidev-code { font-size: 0.85em !important; line-height: 1.45 !important; }
+</style>
+
 ---
 
 # 演示：升级为树模型，并解释它
 
-```python {all|1-12|14-20}
+```python {all|1-2|4-8|10-13}
 import lightgbm as lgb
 import shap
 
-gbm = lgb.LGBMClassifier(
-    n_estimators=300,
-    learning_rate=0.05,
-    num_leaves=31,
-    class_weight="balanced",
-    random_state=42,
-)
+gbm = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05,
+                         num_leaves=31, class_weight="balanced", random_state=42)
 gbm.fit(X_tr, y_tr)
 p2 = gbm.predict_proba(X_te)[:, 1]
 print("AUC:", roc_auc_score(y_te, p2), " KS:", ks(y_te, p2))
@@ -302,9 +296,14 @@ shap.summary_plot(sv[1] if isinstance(sv, list) else sv, X_te)
 通常你会看到：<b>最近一两个月的还款状态（PAY_0、PAY_2）</b>最重要。这符合直觉：越近的逾期，越能预示下个月违约。
 </div>
 
+<style>
+.slidev-code { font-size: 0.85em !important; line-height: 1.45 !important; }
+</style>
+
 <!--
 【35:00】关键不是 AUC 提升多少，而是让学生看到 SHAP 能给出“为什么”。强调：提升不大不代表树模型没用，在特征很多的真实业务中差距会拉大。
 -->
+
 
 ---
 
