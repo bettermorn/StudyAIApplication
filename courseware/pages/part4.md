@@ -50,7 +50,7 @@ layout: section
 
 # 智能体怎么工作：一个循环
 
-```mermaid {scale: 0.9}
+```mermaid {scale: 0.7}
 flowchart LR
   G[目标<br/>评估某企业授信风险] --> P[规划<br/>拆成若干步骤]
   P --> A[行动<br/>调用工具]
@@ -165,7 +165,7 @@ flowchart LR
 
 <div>
 
-```mermaid {scale: 0.75}
+```mermaid {scale: 0.6}
 flowchart TD
   A[多源数据] --> B[图计算<br/>关联穿透]
   A --> C[异常检测<br/>交易信号]
@@ -252,7 +252,7 @@ flowchart TD
 
 **最新版本的多智能体流水线**
 
-```mermaid {scale: 0.65}
+```mermaid {scale: 0.5}
 flowchart TD
   L[总控智能体] --> D[数据]
   D --> AN[分析]
@@ -290,7 +290,7 @@ flowchart TD
 
 <div>
 
-```mermaid {scale: 0.7}
+```mermaid {scale: 0.6}
 flowchart TD
   F[基本面分析师] --> R[研究员<br/>多空辩论]
   S[情绪分析师] --> R
@@ -323,45 +323,70 @@ flowchart TD
 ---
 
 # 动手看：一个极简的“贷前尽调风控智能体”
+---
 
-```python {all|1-14|16-30|32-45}
-from dataclasses import dataclass
+# 动手看（1/2）：极简贷前尽调风控智能体的“工具箱”
 
-# ---- 1) 工具：确定性函数，数字由代码算，不让模型心算 ----
-def get_financials(company):          # 真实场景：对接财报库
+<div class="text-sm opacity-70 mb-2">确定性函数：数字由代码算，不让大模型心算</div>
+
+```python {all|1-2|4-5|7-9|11}
+def get_financials(company):      # 真实场景：对接财报库
     return {"debt_ratio": 0.78, "current_ratio": 0.9, "net_margin": -0.02}
 
-def get_legal_risk(company):          # 真实场景：对接司法/工商接口
+def get_legal_risk(company):      # 真实场景：对接司法/工商接口
     return {"lawsuits_12m": 5, "dishonest_executor": False}
 
-def score_pd(fin, legal):             # 真实场景：调用已上线的评分模型
-    pd_ = 0.02 + 0.08*(fin["debt_ratio"] > 0.7) + 0.03*(legal["lawsuits_12m"] > 3)
+def score_pd(fin, legal):         # 真实场景：调用已上线的评分模型
+    pd_ = 0.02 + 0.08 * (fin["debt_ratio"] > 0.7) + 0.03 * (legal["lawsuits_12m"] > 3)
     return round(pd_, 3)
 
-TOOLS = {"财务": get_financials, "司法": get_legal_risk}
-
-# ---- 2) 智能体：规划 -> 调用工具 -> 汇总 -> 交人工 ----
-@dataclass
-class Report:
-    company: str
-    pd_est: float
-    evidence: list
-    suggestion: str
-    need_human: bool
-
-def due_diligence(company, llm):
-    plan = llm.plan(f"评估 {company} 的授信风险", tools=list(TOOLS))   # 大模型规划
-    evidence = {}
-    for step in plan:                                               # 逐步执行
-        if step in TOOLS:
-            evidence[step] = TOOLS[step](company)
-            log(company, step, evidence[step])                      # 全程留痕
-    pd_est = score_pd(evidence["财务"], evidence["司法"])          # 代码计算
-    text = llm.write(f"依据证据写风险摘要，不得编造数字：{evidence}, PD={pd_est}")
-    need_human = pd_est > 0.05                                     # 高风险必须人工
-    return Report(company, pd_est, evidence, text, need_human)
+TOOLS = {"财务": get_financials, "司法": get_legal_risk}   # 只给“读”，不给“放款”
 ```
 
+<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
+本页只有<b>函数</b>，没有大模型。下一页：智能体如何调度这些工具。
+</div>
+
+<style>
+.slidev-code { font-size: 0.85em !important; line-height: 1.45 !important; }
+</style>
+
+<!--
+【65:00】先讲工具：都是确定性函数，边界清晰、可单测。注意 TOOLS 里只有读取类工具，没有任何放款、改额度的动作。示例数字为教学虚构。
+-->
+
+---
+
+# 动手看（2/2）：极简贷前尽调风控智能体的“工作流”
+
+<div class="text-sm opacity-70 mb-2">规划 → 调用工具 → 代码计算 → 大模型写摘要 → 高风险转人工</div>
+
+```python {all|2|3-7|8|9|10|11-12}
+def due_diligence(company, llm):
+    plan = llm.plan(f"评估 {company} 的授信风险", tools=list(TOOLS))  # 大模型规划
+    evidence = {}
+    for step in plan:                                  # 逐步执行
+        if step in TOOLS:
+            evidence[step] = TOOLS[step](company)
+            log(company, step, evidence[step])         # 全程留痕
+    pd_est = score_pd(evidence["财务"], evidence["司法"])   # 代码计算 PD
+    text = llm.write(f"依据证据写摘要，不得编造数字：{evidence}, PD={pd_est}")
+    need_human = pd_est > 0.05                         # 高风险必须人工
+    return {"company": company, "pd": pd_est, "summary": text,
+            "evidence": evidence, "need_human": need_human}
+```
+
+<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
+<code>llm</code> 对象与 <code>log</code> 函数为示意，不要求现场运行；重点看每一步“谁来做”：模型规划与写作，代码计算，人最终把关。
+</div>
+
+<style>
+.slidev-code { font-size: 0.85em !important; line-height: 1.45 !important; }
+</style>
+
+<!--
+【68:00】逐步点击讲：①大模型规划；②逐步调用工具并留痕；③PD 由代码算；④大模型只写摘要，不得编造数字；⑤高风险强制转人工。这里的 0.05 阈值是示意。
+-->
 <!--
 【65:00】逐段讲：①工具是确定性的；②大模型只做规划与写作；③高风险强制转人工；④全程留痕。llm 对象和 log 函数在课件里是示意，不要求现场运行。
 -->
@@ -424,7 +449,7 @@ def due_diligence(company, llm):
 
 ---
 
-# 小组讨论（3 分钟）
+# 小组讨论（快速思考）（3 分钟）
 
 <div class="text-xl mt-6">
 
