@@ -26,6 +26,10 @@ fonts:
 金融大数据与智能风险管理微专业 · 专题讲座（90 分钟）
 </div>
 
+ [课程GitHub仓库](https://github.com/bettermorn/StudyAIApplication)
+
+[下载智能软件工程实践幻灯片](https://bettermorn.github.io/StudyAIApplication/courseware/FDIRM.pdf)
+
 <!--
 【00:00】开场。先自我介绍一句，然后直接抛问题，不要先讲定义。
 -->
