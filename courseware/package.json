@@ -1,0 +1,16 @@
+{
+  "name": "fdirm",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "slidev build fdirm.md --base /StudyAIApplication/courseware/",
+    "dev": "slidev fdirm.md --open",
+    "export": "slidev export fdirm.md"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.19.1",
+    "@slidev/theme-default": "latest",
+    "@slidev/theme-seriph": "latest",
+    "vue": "^3.5.33"
+  }
+}
